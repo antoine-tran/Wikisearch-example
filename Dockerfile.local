@@ -1,9 +1,13 @@
 # 
-# Dockerfile to update extra python libraries:
-# - ElasticSearch python client
-#
+# Dockerfile to set up application in standalone model
+# 
+# 1. Install python third-party libraries
+# 2. Download the wikipedia XML dump
+# 3. Run the system
+# 
 # Tuan Tran
 # ttran@L3S.de
+#
 
 FROM library/python
 
@@ -11,4 +15,18 @@ FROM library/python
 # > At the moment, setting "LANG=C" on a Linux system *fundamentally breaks Python 3*, and that's not OK.
 ENV LANG C.UTF-8
 
-RUN pip install elasicsearch
+# Upload source code
+ADD . /home
+WORKDIR "/home/python"
+
+# Install the libraries
+RUN pip install -r requirements.txt
+
+# Download the data
+RUN wget -O enwiki.xml.bz2 "http://download.wikimedia.org/enwiki/latest/enwiki-latest-pages-articles.xml.bz2" \
+    && mkdir -p /data \
+    && tar -xzC /data -f enwiki.xml.bz2 \
+    && rm enwiki.xml.bz2
+
+# Test the connection to the elasticsearch container
+CMD ["python","search.py"]
