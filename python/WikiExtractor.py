@@ -17,6 +17,7 @@
 #   orangain (orangain@gmail.com)
 #   Seth Cleveland (scleveland@turnitin.com)
 #   Bren Barn
+#   Tuan Tran
 #
 # =============================================================================
 #  Copyright (c) 2011-2017. Giuseppe Attardi (attardi@di.unipi.it).
@@ -52,6 +53,8 @@ the following structure
 Template expansion requires preprocesssng first the whole dump and
 collecting template definitions.
 
+2017-03-22 (Tuan): Edit the extraction to include the contributor
+2017-03-24 (Tuan): Change the parallel paradigm from multiprocessing to joblib
 """
 
 from __future__ import unicode_literals, division
@@ -70,7 +73,9 @@ import json
 from io import StringIO
 from multiprocessing import Queue, Process, Value, cpu_count
 from timeit import default_timer
-
+from index import *
+import itertools as IT
+from joblib import Parallel, delayed # 2017-03-24 (Tuan) change the parallel framework to joblib
 
 PY2 = sys.version_info[0] == 2
 # Python 2.7 compatibiity
@@ -522,8 +527,10 @@ class Extractor(object):
     """
     An extraction task on a article.
     """
-    def __init__(self, id, revid, title, lines):
+    # def __init__(self, id, revid, title, lines):
+    def __init__(self, id, revid, title, lines, contributor):
         """
+        2017-03-22 (Tuan): The constructor now takes contributor as input too
         :param id: id of page.
         :param title: tutle of page.
         :param lines: a list of lines.
@@ -531,6 +538,10 @@ class Extractor(object):
         self.id = id
         self.revid = revid
         self.title = title
+
+        # 2017-03-22 (Tuan): Define new property for contributor info
+        self.contributor = contributor
+
         self.text = ''.join(lines)
         self.magicWords = MagicWords()
         self.frame = Frame()
@@ -552,6 +563,10 @@ class Extractor(object):
                 'title': self.title,
                 'text': "\n".join(text)
             }
+
+            # 2017-03-22 (Tuan): Add contributor to json field
+            json_data['contributor'] = self.contributor
+
             if options.print_revision:
                 json_data['revid'] = self.revid
             # We don't use json.dump(data, out) because we want to be
@@ -562,10 +577,18 @@ class Extractor(object):
             out.write(out_str)
             out.write('\n')
         else:
+
+            # 2017-03-22 (Tuan): Add contributor to the attribute of <doc>
+            '''
             if options.print_revision:
                 header = '<doc id="%s" revid="%s" url="%s" title="%s">\n' % (self.id, self.revid, url, self.title)
             else:
                 header = '<doc id="%s" url="%s" title="%s">\n' % (self.id, url, self.title)
+            '''
+            if options.print_revision:
+                header = '<doc id="%s" revid="%s" url="%s" title="%s" contributor="%s">\n' % (self.id, self.revid, url, self.title, self.contributor)
+            else:
+                header = '<doc id="%s" url="%s" title="%s" contributor="%s">\n' % (self.id, url, self.title, self.contributor)
             footer = "\n</doc>\n"
             if out == sys.stdout:   # option -a or -o -
                 header = header.encode('utf-8')
@@ -577,10 +600,17 @@ class Extractor(object):
                 out.write('\n')
             out.write(footer)
 
-    def extract(self, out):
+    # 2017-03-24 (Tuan): Port main code to extract(self), keep this code for
+    # backward compatibility
+    def extract(self, out): 
         """
         :param out: a memory file.
         """
+        text = extract(self)
+        self.write_output(out, text)
+
+    # 2017-03-24 (Tuan): Change "push operator" to "pull operator" style of the method
+    def extract(self):
         logging.info('%s\t%s', self.id, self.title)
         
         # Separate header from text with a newline.
@@ -634,7 +664,7 @@ class Extractor(object):
         if sum(len(line) for line in text) < options.min_text_length:
             return
         
-        self.write_output(out, text)
+        # self.write_output(out , text) # 2017-03-24 (Tuan): Commented out to return text directly
         
         errs = (self.template_title_errs,
                 self.recursion_exceeded_1_errs,
@@ -643,7 +673,7 @@ class Extractor(object):
         if any(errs):
             logging.warn("Template errors in article '%s' (%s): title(%d) recursion(%d, %d, %d)",
                          self.title, self.id, *errs)
-
+        return text
 
     def transform(self, wikitext):
         """
@@ -1038,7 +1068,7 @@ class Extractor(object):
         # part-value      = wikitext-L3
         # wikitext-L3     = literal / template / tplarg / link / comment /
         #                   line-eating-comment / unclosed-comment /
-        #           	    xmlish-element / *wikitext-L3
+        #                   xmlish-element / *wikitext-L3
 
         # A tplarg may contain other parameters as well as templates, e.g.:
         #   {{{text|{{{quote|{{{1|{{error|Error: No text given}}}}}}}}}}}
@@ -2222,7 +2252,7 @@ def replaceInternalLinks(text):
 #                 if '%' in m.group(1):
 #                     m.group(1) = rawurldecode(m.group(1))
 #                 trail = ""
-#             else:		# Invalid form; output directly
+#             else:     # Invalid form; output directly
 #                 s += prefix + '[[' + line
 #                 continue
 
@@ -2255,7 +2285,7 @@ def replaceInternalLinks(text):
 #         ns = nt.getNamespace()
 #         iw = nt.getInterwiki()
 
-#         if might_be_img {	# if this is actually an invalid link
+#         if might_be_img { # if this is actually an invalid link
 #             if (ns == NS_FILE and noforce) { # but might be an image
 #                 found = False
 #                 while True:
@@ -2729,7 +2759,11 @@ def load_templates(file, output_file=None):
     if output_file:
         output = codecs.open(output_file, 'wb', 'utf-8')
     for page_count, page_data in enumerate(pages_from(file)):
-        id, revid, title, ns, page = page_data
+
+        # 2017-03-22 (Tuan): output results now also has contributor info
+        # id, revid, title, ns, page = page_data
+        id, revid, title, ns, contributor, page = page_data
+
         if not output_file and (not options.templateNamespace or
                                 not options.moduleNamespace):  # do not know it yet
             # reconstruct templateNamespace and moduleNamespace from the first title
@@ -2801,6 +2835,11 @@ def pages_from(input):
             ns = m.group(3)
         elif tag == 'redirect':
             redirect = True
+
+        # 2017-03-22 (Tuan): Add patterns to extract contributor here
+        elif tag == 'contributor':
+            contributor = m.group(3)
+
         elif tag == 'text':
             if m.lastindex == 3 and line[m.start(3)-2] == '/': # self closing
                 # <text xml:space="preserve" />
@@ -2818,7 +2857,11 @@ def pages_from(input):
             page.append(line)
         elif tag == '/page':
             if id != last_id and not redirect:
-                yield (id, revid, title, ns, page)
+
+                # 2017-03-22 (Tuan): Change the output of pages_from to
+                # include contributor
+                # yield (id, revid, title, ns, page)
+                yield (id, revid, title, ns, contributor, page)
                 last_id = id
                 ns = '0'
             id = None
@@ -2910,14 +2953,25 @@ def process_dump(input_file, template_file, out_file, file_size, file_compress,
     if out_file == '-':
         out_file = None
 
+    # 2017-03-24 (Tuan) This was commented out to convert to joblib
+    '''
     worker_count = process_count
 
     # load balancing
     max_spool_length = 10000
     spool_length = Value('i', 0, lock=False)
 
+
     # reduce job that sorts and prints output
-    reduce = Process(target=reduce_process,
+
+    # 2017-03-22 (Tuan): Configure to allow index to ElasticSearch
+    if options.es:
+        logging.info("Using ElasticSearch index")
+        reduce = Process(target=index_process,
+                     args=(options, output_queue, spool_length,
+                           out_file, file_size, file_compress))
+    else:
+        reduce = Process(target=reduce_process,
                      args=(options, output_queue, spool_length,
                            out_file, file_size, file_compress))
     reduce.start()
@@ -2938,7 +2992,9 @@ def process_dump(input_file, template_file, out_file, file_size, file_compress,
     # Mapper process
     page_num = 0
     for page_data in pages_from(input):
-        id, revid, title, ns, page = page_data
+        # 2017-03-22 (Tuan): output results now also has contributor info
+        # id, revid, title, ns, page = page_data
+        id, revid, title, ns, contributor, page = page_data
         if keepPage(ns, page):
             # slow down
             delay = 0
@@ -2949,7 +3005,10 @@ def process_dump(input_file, template_file, out_file, file_size, file_compress,
                     delay += 10
             if delay:
                 logging.info('Delay %ds', delay)
-            job = (id, revid, title, page, page_num)
+
+            # 2017-03-22 (Tuan): Pass the contributor to the extractor
+            # job = (id, revid, title, page, page_num)
+            job = (id, revid, title, page, contributor, page_num)
             jobs_queue.put(job) # goes to any available extract_process
             page_num += 1
         page = None             # free memory
@@ -2967,6 +3026,27 @@ def process_dump(input_file, template_file, out_file, file_size, file_compress,
     output_queue.put(None)
     # wait for it to finish
     reduce.join()
+    '''
+
+    es = create_index()
+    pages_iter = pages_from(input)
+    batch = 10000
+    page_num = 0
+    with Parallel(n_jobs=process_count) as parallel:
+        while True:
+            grouped_pages = IT.islice(pages_iter,batch)
+            logging.info('==========\nMap phase:\n')
+            results = parallel(delayed(extract_process_joblib)
+                            (options, id, revid, title, page, user)
+                    for id, revid, title, ns, user, page in grouped_pages)
+
+            cached_results = list(results)
+            if len(cached_results) == 0:
+                break
+
+            page_num += len(cached_results)
+            logging.info('==========\nReduce phase:\n')
+            index_process(options, es, cached_results)
 
     extract_duration = default_timer() - extract_start
     extract_rate = page_num / extract_duration
@@ -2976,7 +3056,6 @@ def process_dump(input_file, template_file, out_file, file_size, file_compress,
 
 # ----------------------------------------------------------------------
 # Multiprocess support
-
 
 def extract_process(opts, i, jobs_queue, output_queue):
     """Pull tuples of raw page content, do CPU/regex-heavy fixup, push finished text
@@ -2992,17 +3071,23 @@ def extract_process(opts, i, jobs_queue, output_queue):
 
     out = StringIO()                 # memory buffer
     
-    
     while True:
-        job = jobs_queue.get()  # job is (id, title, page, page_num)
+        # 2017-03-22 (Tuan): Change the comment
+        # job = jobs_queue.get()  # job is (id, title, page, page_num)
+        job = jobs_queue.get()  # job is (id, title, page, contributor, page_num)
         if job:
-            id, revid, title, page, page_num = job
+
+            # 2017-03-22 (Tuan): Input now includes contributor
+            # id, revid, title, page, page_num = job
+            id, revid, title, page, contributor, page_num = job
             try:
-                e = Extractor(*job[:4]) # (id, revid, title, page)
+                # 2017-03-22 (Tuan): Change the comment
+                # e = Extractor(*job[:4]) # (id, revid, title, page)
+                e = Extractor(*job[:5]) # (id, revid, title, page, contributor)
                 page = None              # free memory
                 e.extract(out)
                 text = out.getvalue()
-            except:
+            except Exception as ex:
                 text = ''
                 logging.exception('Processing page: %s %s', id, title)
 
@@ -3014,6 +3099,24 @@ def extract_process(opts, i, jobs_queue, output_queue):
             break
     out.close()
 
+# 2017-03-24 (Tuan): New version of extract_process that uses joblib
+def extract_process_joblib(opts, id, revid, title, page, contributor):
+    """ Perform the extraction and return page_num and text content
+    :param opts: global options to access the application parameters
+    :param id: page id
+    :param title: page title
+    :param page: raw content of pages to be cleaned
+    :param contributor: information of contributor
+    """
+    global options
+    options = opts
+
+    createLogger(options.quiet, options.debug)
+
+    e = Extractor(id, revid, title, page, contributor)
+    out = e.extract()
+
+    return es_doc(id,title,"\n".join(out),contributor)  
 
 report_period = 10000           # progress report period
 def reduce_process(opts, output_queue, spool_length,
@@ -3073,7 +3176,6 @@ def reduce_process(opts, output_queue, spool_length,
     if output != sys.stdout:
         output.close()
 
-
 # ----------------------------------------------------------------------
 
 # Minimum size of output files
@@ -3096,7 +3198,8 @@ def main():
                         help="compress output files using bzip")
     groupO.add_argument("--json", action="store_true",
                         help="write output in json format instead of the default one")
-
+    groupO.add_argument("--es", action="store_true",
+                        help="write output to ElasticSearch of the default one")
 
     groupP = parser.add_argument_group('Processing')
     groupP.add_argument("--html", action="store_true",
@@ -3147,6 +3250,10 @@ def main():
     options.keepLists = args.lists
     options.toHTML = args.html
     options.write_json = args.json
+
+    # Enable ES configuration
+    options.es = args.es
+
     options.print_revision = args.revision
     options.min_text_length = args.min_text_length
     if args.html:
@@ -3211,8 +3318,12 @@ def main():
 
         file = fileinput.FileInput(input_file, openhook=fileinput.hook_compressed)
         for page_data in pages_from(file):
-            id, revid, title, ns, page = page_data
-            Extractor(id, revid, title, page).extract(sys.stdout)
+
+            # 2017-03-22 (Tuan): output results now also has contributor info
+            # id, revid, title, ns, page = page_data
+            # Extractor(id, revid, title, page).extract(sys.stdout)
+            id, revid, title, ns, contributor, page = page_data
+            Extractor(id, revid, title, page, contributor).extract(sys.stdout)
         file.close()
         return
 
