@@ -1,0 +1,16 @@
+# Docker compose file to set up the two processes:
+# - The elasticsearch cluster
+# - The pipeline: indexer --> searcher
+# So far the synchronization between the searcher process and the indexer process
+# is done via a simple empty file named "done", similar to the way Hadoop MapReduce
+# marks the completed job
+version: '3'
+services:
+  es:
+    image: "elasticsearch"
+  indexer:
+    build:
+      context: .
+      dockerfile: Dockerfile.local
+
+
