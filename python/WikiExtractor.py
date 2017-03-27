@@ -3047,7 +3047,7 @@ def process_dump(input_file, template_file, out_file, file_size, file_compress,
 
     es = create_index()
     pages_iter = iter_pages()
-    batch = 10000
+    batch = options.batch
     page_num = 0
     with Parallel(n_jobs=process_count) as parallel:
         while True:
@@ -3249,7 +3249,7 @@ def main():
     parser.add_argument("--processes", type=int, default=default_process_count,
                         help="Number of processes to use (default %(default)s)")
 
-    parser.add_argument("--batch", type=int, default=default_process_count,
+    parser.add_argument("--batch", type=int, default=1000,
                         help="Size of indexing batch (default 10000)")
 
     groupS = parser.add_argument_group('Special')
@@ -3270,7 +3270,7 @@ def main():
     options.keepLists = args.lists
     options.toHTML = args.html
     options.write_json = args.json
-    options.
+    options.batch = args.batch
 
     # Enable ES configuration
     options.es = args.es
