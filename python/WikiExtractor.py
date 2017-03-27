@@ -2847,7 +2847,7 @@ def pages_from(input):
             inContributor = False
         elif tag == 'username' and inContributor:
             contributor = m.group(3)
-            logging.info('Contributor: %s' % contributor)
+            # logging.info('Contributor: %s' % contributor)
 
         elif tag == 'text':
             if m.lastindex == 3 and line[m.start(3)-2] == '/': # self closing
