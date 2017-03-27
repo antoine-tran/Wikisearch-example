@@ -40,7 +40,8 @@ if __name__ == "__main__":
     if argv[1] == 'simple':
         try:
             client = connect()
-            simplesearch(client,argv[2],int(argv[3]))
+            for hit in simplesearch(client,argv[2],int(argv[3])):
+                print(hit)
         finally:
             es_close(client)
 
