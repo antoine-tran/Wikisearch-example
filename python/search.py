@@ -12,26 +12,26 @@ from conn import connect,close as es_close
 QUERY = { "query":{ "multi_match" : {"query": "%s", "fields": [ "text", "title", "contributor" ]}}}
 
 def search(client, term, k):
-	'''
-	Get the top-k results from ES using default ranking function. The results are cached into 
-	main memory
-	'''
-	res = client.search(index='wiki',body= { 
-		"query": { 
-		    "multi_match" : {
-		        "query": "%s" % term, 
-		        "fields": [ "text", "title", "contributor" ]
-		    }
-		}
+    '''
+    Get the top-k results from ES using default ranking function. The results are cached into 
+    main memory
+    '''
+    res = client.search(index='wiki',body= { 
+        "query": { 
+            "multi_match" : {
+                "query": "%s" % term, 
+                "fields": [ "text", "title", "contributor" ]
+            }
+        }
     })
 
     if res == None or len(res) == 0: return [];
     for hit in res['hits']['hits']:
-    	print("%(title)s %(contributor)s: %(text)s" % hit["_source"])
+        print("%(title)s %(contributor)s: %(text)s" % hit["_source"])
 
 if __name__ == "__main__":
-	client = connect()
-	search(client,sys.argv[1])
-	es_close(client)
+    client = connect()
+    search(client,sys.argv[1])
+    es_close(client)
 
 
