@@ -2837,8 +2837,10 @@ def pages_from(input):
             redirect = True
 
         # 2017-03-22 (Tuan): Add patterns to extract contributor here
+        # 2017-03-26 (Tuan): Fix bug in extracting contributor patterns
         elif tag == 'contributor':
             contributor = m.group(3)
+            logging.info('Contributor: %s' % contributor)
 
         elif tag == 'text':
             if m.lastindex == 3 and line[m.start(3)-2] == '/': # self closing
