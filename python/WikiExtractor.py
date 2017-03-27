@@ -2839,7 +2839,7 @@ def pages_from(input):
         # 2017-03-22 (Tuan): Add patterns to extract contributor here
         # 2017-03-26 (Tuan): Fix bug in extracting contributor patterns
         elif tag == 'contributor':
-            contributor = m.group(3)
+            contributor = m.group(1)
             logging.info('Contributor: %s' % contributor)
 
         elif tag == 'text':
