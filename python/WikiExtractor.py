@@ -2845,7 +2845,7 @@ def pages_from(input):
             inContributor = True
         elif tag == '/contributor':
             inContributor = False
-        eliftag == 'username' and inContributor:
+        elif tag == 'username' and inContributor:
             contributor = m.group(3)
             logging.info('Contributor: %s' % contributor)
 
