@@ -10,8 +10,8 @@ from elasticsearch import Elasticsearch
 ES_HOSTS = [{'host': 'localhost', 'port': 9200}]
 
 def connect():
-	return Elasticsearch(ES_HOSTS)
+    return Elasticsearch(ES_HOSTS)
 
 def close(client):
-	for conn in client.transport.connection_pool.connections:
+    for conn in client.transport.connection_pool.connections:
         conn.pool.close()
