@@ -41,7 +41,7 @@ if __name__ == "__main__":
         try:
             client = connect()
             for hit in simplesearch(client,argv[2],int(argv[3])):
-                print(hit.encode('utf-8'))
+                print(str(hit['_source']).encode('utf-8'))
         finally:
             es_close(client)
 
