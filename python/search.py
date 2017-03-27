@@ -23,7 +23,8 @@ def simplesearch(client, term, k):
                 "query": "%s" % term, 
                 "fields": [ "text", "title", "contributor" ]
             }
-        }
+        },
+        "size": k
     })
 
     if res == None or len(res) == 0: return [];
