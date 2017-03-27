@@ -6,6 +6,7 @@
 # Tuan Tran (ttran@l3s.de)
 #
 
+from importlib import reload
 import sys
 reload(sys)
 sys.setdefaultencoding('utf-8') # Set system's default encoding to utf-8
