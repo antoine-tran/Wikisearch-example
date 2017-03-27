@@ -31,7 +31,7 @@ def search(client, term, k):
 
 if __name__ == "__main__":
     client = connect()
-    search(client,sys.argv[1])
+    search(client,sys.argv[1],int(sys.argv[2]))
     es_close(client)
 
 
