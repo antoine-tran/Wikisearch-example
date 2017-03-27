@@ -7,11 +7,12 @@
 #
 
 import sys
+from sys import argv
 from conn import connect,close as es_close
 
 QUERY = { "query":{ "multi_match" : {"query": "%s", "fields": [ "text", "title", "contributor" ]}}}
 
-def search(client, term, k):
+def simplesearch(client, term, k):
     '''
     Get the top-k results from ES using default ranking function. The results are cached into 
     main memory
@@ -27,11 +28,20 @@ def search(client, term, k):
 
     if res == None or len(res) == 0: return [];
     for hit in res['hits']['hits']:
-        print("%(title)s: %(contributor)s" % hit["_source"])
+        yield hit["_source"]
+
+def rerankedsearch(client, term, k):
+    '''
+    Get the results and rerank 
+    '''
+    return
 
 if __name__ == "__main__":
-    client = connect()
-    search(client,sys.argv[1],int(sys.argv[2]))
-    es_close(client)
+    if argv[1] == 'simple':
+        try:
+            client = connect()
+            simplesearch(client,argv[2],int(argv[3]))
+        finally:
+            es_close(client)
 
 

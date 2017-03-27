@@ -183,6 +183,9 @@ options = SimpleNamespace(
     ##
     # Minimum expanded text length required to print document
     min_text_length = 0,
+
+    ##
+    # Size of indexing batch when the Es option is used 
     
     # Shared objects holding templates, redirects and cache
     templates = {},
@@ -3246,6 +3249,9 @@ def main():
     parser.add_argument("--processes", type=int, default=default_process_count,
                         help="Number of processes to use (default %(default)s)")
 
+    parser.add_argument("--batch", type=int, default=default_process_count,
+                        help="Size of indexing batch (default 10000)")
+
     groupS = parser.add_argument_group('Special')
     groupS.add_argument("-q", "--quiet", action="store_true",
                         help="suppress reporting progress info")
@@ -3264,6 +3270,7 @@ def main():
     options.keepLists = args.lists
     options.toHTML = args.html
     options.write_json = args.json
+    options.
 
     # Enable ES configuration
     options.es = args.es

@@ -15,6 +15,7 @@ def connect():
     return Elasticsearch(ES_HOSTS)
 
 def close(client):
+    if client == None: return;
     for conn in client.transport.connection_pool.connections:
         conn.pool.close()
 
