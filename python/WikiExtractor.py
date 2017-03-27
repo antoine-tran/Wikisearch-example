@@ -2812,6 +2812,9 @@ def pages_from(input):
     inText = False
     redirect = False
     title = None
+
+    # 2017-03-26 (Tuan): contributor tags are multi-line
+    inContributor = False
     for line in input:
         if not isinstance(line, text_type): line = line.decode('utf-8')
         if '<' not in line:  # faster than doing re.search()
@@ -2839,7 +2842,11 @@ def pages_from(input):
         # 2017-03-22 (Tuan): Add patterns to extract contributor here
         # 2017-03-26 (Tuan): Fix bug in extracting contributor patterns
         elif tag == 'contributor':
-            contributor = m.group(1)
+            inContributor = True
+        elif tag == '/contributor':
+            inContributor = False
+        eliftag == 'username' and inContributor:
+            contributor = m.group(3)
             logging.info('Contributor: %s' % contributor)
 
         elif tag == 'text':
