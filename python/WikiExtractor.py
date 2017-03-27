@@ -3028,8 +3028,13 @@ def process_dump(input_file, template_file, out_file, file_size, file_compress,
     reduce.join()
     '''
 
+    def iter_pages():
+        for id, revid, title, ns, contributor, page in pages_from(input):
+            if keepPage(ns, page):
+                yield id, revid, title, ns, contributor, page
+
     es = create_index()
-    pages_iter = pages_from(input)
+    pages_iter = iter_pages()
     batch = 10000
     page_num = 0
     with Parallel(n_jobs=process_count) as parallel:
