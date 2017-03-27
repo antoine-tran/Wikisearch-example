@@ -27,7 +27,7 @@ def search(client, term, k):
 
     if res == None or len(res) == 0: return [];
     for hit in res['hits']['hits']:
-        print("%(title)s %(contributor)s: %(text)s" % hit["_source"])
+        print("%(title)s %(contributor)s" % hit["_source"])
 
 if __name__ == "__main__":
     client = connect()
