@@ -28,7 +28,7 @@ def simplesearch(client, term, k):
 
     if res == None or len(res) == 0: return [];
     for hit in res['hits']['hits']:
-        yield hit['id'], hit['_source']['title'], hit['_source']['contributor']
+        yield hit['_id'], hit['_source']['title'], hit['_source']['contributor']
 
 def rerankedsearch(client, term, k):
     '''
