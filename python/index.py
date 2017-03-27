@@ -7,19 +7,17 @@
 # Tuan Tran (ttran@l3s.de)
 #
 # 
-from elasticsearch import Elasticsearch, helpers
+from elasticsearch import helpers
 import logging
 import json
 from timeit import default_timer
-
-# By default, the elasticsearch runs on the same machine
-ES_HOSTS = [{'host': 'localhost', 'port': 9200}]
+from conn import connect, close as es_close
 
 # Global variable to keep track of indexed pages for reporting
 page_cnt = 0
 
 def create_index():
-    es = Elasticsearch(ES_HOSTS)
+    es = connect()
     # Create one index for wiki, ignore the warning of index already exists
     es.indices.create(index='wiki',ignore=400)
 
@@ -54,4 +52,4 @@ def index_process(opts, es, data):
     helpers.bulk(es, data)
     interval_rate = len(data) / (default_timer() - interval_start)
     page_cnt += len(data)
-    logging.info("Indexed %d articles (%.1f art/s)", page_cnt, interval_rate)
+    logging.info("Indexed %d articles (%.1f art/s)", page_cnt, interval_rate)    
