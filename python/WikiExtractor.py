@@ -3250,7 +3250,7 @@ def main():
                         help="Number of processes to use (default %(default)s)")
 
     parser.add_argument("--batch", type=int, default=1000,
-                        help="Size of indexing batch (default 10000)")
+                        help="Size of indexing batch (default 1000)")
 
     groupS = parser.add_argument_group('Special')
     groupS.add_argument("-q", "--quiet", action="store_true",

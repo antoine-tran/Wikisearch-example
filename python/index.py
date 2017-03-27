@@ -52,4 +52,4 @@ def index_process(opts, es, data):
     helpers.bulk(es, data)
     interval_rate = len(data) / (default_timer() - interval_start)
     page_cnt += len(data)
-    logging.info("Indexed %d articles (%.1f art/s)", page_cnt, interval_rate)    
+    print("Indexed %d articles (%.1f art/s)" % (page_cnt, interval_rate))    
