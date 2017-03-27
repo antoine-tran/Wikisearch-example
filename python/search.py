@@ -7,8 +7,8 @@
 #
 
 import sys
-reload(sys
-sys.setdefaultencoding('utf-8')) # Set system's default encoding to utf-8
+reload(sys)
+sys.setdefaultencoding('utf-8') # Set system's default encoding to utf-8
 from sys import argv
 from conn import connect,close as es_close
 
