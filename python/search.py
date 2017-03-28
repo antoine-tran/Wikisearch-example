@@ -193,7 +193,7 @@ def memefficientrerankedsearch(es, term, k, func):
         file_counter += 1
         del cache[:] # enable GC
 
-    logging.info('Total number of I/O writes: %d ' % file_counter)
+    print('Total number of I/O writes: %d ' % file_counter)
 
     # Step 3: Merge sorted files using priority queue, size of the queue: O(file_counter)
     files_lst = [join(tmp_out_dir,f) for f in os.listdir(tmp_out_dir) 
