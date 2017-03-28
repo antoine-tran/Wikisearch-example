@@ -15,7 +15,7 @@ from os.path import join,isfile
 from conn import connect,close as es_close
 from elasticsearch import helpers
 
-import cPickle as pkl
+import pickle as pkl
 import time
 import logging
 import heapq
