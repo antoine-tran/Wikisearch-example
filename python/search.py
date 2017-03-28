@@ -157,6 +157,7 @@ def memefficientrerankedsearch(es, term, k, func):
         while cnt < k and sys.getsizeof(cache) < MEMSIZE:
             doc = next(res)
             doc['_source']['text'] = ''  # enable GC
+            print(str(doc).encode('utf-8'))
 
             if sys.getsizeof(doc) > MEMSIZE - sys.getsizeof(cache): # do not have enough space to expand cache.
                                                                     # This is just an estimation, because lists
@@ -166,13 +167,9 @@ def memefficientrerankedsearch(es, term, k, func):
                 # Step 1: Internal sorting for each chunk of data. This must be in-place to save memory
                 cache.sort(key=lambda x: func(es, term, x), reverse=True)
                 
-                written_items_no = len(cache) # Only get maximum k results in total
-
                 # Step 2: Write sorted output temp dir
                 with open(join(tmp_out_dir, '%d.es' % file_counter), 'wb') as fh:
-                    # We do not use comprehension or slicing here to save memory
-                    for i in range(written_items_no): 
-                        pkl.dump(reranked[i], fh, pkl.HIGHEST_PROTOCOL)
+                    [pkl.dump(c, fh, pkl.HIGHEST_PROTOCOL) for c in cache]
 
                 file_counter += 1
                 del cache[:]
@@ -188,8 +185,7 @@ def memefficientrerankedsearch(es, term, k, func):
         cache.sort(key=lambda x: func(es, term, x), reverse=True)
         written_items_no = min(k-cnt, len(cache))
         with open(join(tmp_out_dir, '%d.es' % file_counter), 'wb') as fh:
-            # We do not use comprehension or slicing here to save memory
-            for i in range(written_items_no): 
+            for i in range(written_items_no): # We do not use comprehension or slicing here to save memory
                 pkl.dump(reranked[i], fh, pkl.HIGHEST_PROTOCOL)
 
         file_counter += 1
