@@ -31,3 +31,41 @@ $ docker run -i essearch
 and follow the instructions.
 
 
+### Manual Installation and Run
+
+If the Docker option does not work, you can try to manually build the index and issue the query step by step as follows: Fist you download the project and cd to its directory. Then you:
+
+* Download the XML dump and extract to one directory:
+
+```shell
+$ wget -O enwiki.xml.bz2 "http://download.wikimedia.org/enwiki/latest/enwiki-latest-pages-articles.xml.bz2" \
+    && mkdir -p data \
+    && tar -xzC data -f enwiki.xml.bz2 \
+    && rm enwiki.xml.bz2
+```
+
+* Download and install [elasticsearch](https://www.elastic.co/). Start the cluster with default setting:
+```shell
+$ cd [ELASTIC_DIR]
+$ bin/elasticsearch
+```
+
+* Install the third party tools:
+```shell
+$ pip install -r requirements.txt
+```
+
+* Run the indexing service:
+
+```shell
+$ cd python
+$ python WikiExtractor.py --json --processes 10 --quiet --batch 10000 ../data/enwiki.xml
+```
+
+* When the indexing is complete, you run the client API to test the query:
+
+```shell
+$ python search.py
+```
+
+
