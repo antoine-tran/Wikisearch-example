@@ -132,7 +132,7 @@ def memefficientrerankedsearch(es, term, k, func):
         doc_type='page',
         scroll='1m', # Keep the connection alive for max 1 min
         size=max_batch,
-        body={
+        query={
             "query": { 
                 "multi_match" : {
                     "query": "%s" % term, 
@@ -197,7 +197,7 @@ def memefficientrerankedsearch(es, term, k, func):
 
     logging.info('Total number of I/O writes: %d ' % file_counter)
 
-    # Step 3: Merge sorted files using priority queue, size of the queue: O(max_batch)
+    # Step 3: Merge sorted files using priority queue, size of the queue: O(file_counter)
     files_lst = [join(tmp_out_dir,f) for f in os.listdir(tmp_out_dir) 
             if isfile(join(tmp_out_dir,f)) and f.endswith('es')]
     merged_results = heapq.merge(*map(pklLoader, files_lst), key=lambda d: -float(d['_score']))
