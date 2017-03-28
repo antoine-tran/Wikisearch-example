@@ -117,7 +117,22 @@ def pklLoader(f):
         pass
 
 TMP_DIR = 'tmp'
-MEMSIZE = 104857600 # The size of memory to allocate the cached array is 100MB. Must be tuned later
+MEMSIZE = 1000 # 104857600 # The size of memory to allocate the cached array is 100MB. Must be tuned later
+
+def writetmpfile(cache, tmp_out_dir, file_counter):
+    '''
+    Write out the sorted list to a directory as a new file
+    '''
+    if tmp_out_dir == None: # Lazily create the directory
+        tmp_out_dir = join(TMP_DIR, str(time.time()))
+        if not exists(tmp_out_dir):
+            os.makedirs(tmp_out_dir)
+
+    fname = join(tmp_out_dir, '%d.es' % file_counter)
+    with open(fname, 'wb') as fh:
+        [pkl.dump(c, fh, pkl.HIGHEST_PROTOCOL) for c in cache]
+
+    return tmp_out_dir, fname # Keep the reference of the created directory, and the file which is just created
 
 def memefficientrerankedsearch(es, term, k, func):
     '''
@@ -141,18 +156,11 @@ def memefficientrerankedsearch(es, term, k, func):
                 }
             }
         })
-    # sid = res['_scroll_id']
-    # batch_size = res['hits']['total']
 
-    # Write all partially sorted results into binary files in the same directory
-    tmp_out_dir = join(TMP_DIR, str(time.time()))
-    if not exists(tmp_out_dir):
-        os.makedirs(tmp_out_dir)
-
-    cnt = 0           # The number of results received so far
-    file_counter = 0  # The file counter to check no. of I/O
-    cache = []        # The list of currently fetched pages
-
+    cnt = 0             # The number of results received so far
+    file_counter = 0    # The file counter to check no. of I/O
+    cache = []          # The list of currently fetched pages
+    tmp_out_dir = None  # Write all partially sorted results into binary files in the same directory
     try:
         while cnt < k and sys.getsizeof(cache) < MEMSIZE:
             doc = next(res)
@@ -168,8 +176,7 @@ def memefficientrerankedsearch(es, term, k, func):
                 cache.sort(key=lambda x: func(es, term, x), reverse=True)
                 
                 # Step 2: Write sorted output temp dir
-                with open(join(tmp_out_dir, '%d.es' % file_counter), 'wb') as fh:
-                    [pkl.dump(c, fh, pkl.HIGHEST_PROTOCOL) for c in cache]
+                tmp_out_dir,_ = writetmpfile(cache, tmp_out_dir, file_counter)
 
                 file_counter += 1
                 del cache[:]
@@ -179,18 +186,10 @@ def memefficientrerankedsearch(es, term, k, func):
     except StopIteration:
         pass
 
-    if len(cache) > 0 and cnt < k: # Write the remaining results to the last file
-
-        cache.append(doc)
+    if len(cache) > 0 and cnt < k: # Write the remaining results to the last file. Repeat the above 2 steps        
         cache.sort(key=lambda x: func(es, term, x), reverse=True)
-        written_items_no = min(k-cnt, len(cache))
-        with open(join(tmp_out_dir, '%d.es' % file_counter), 'wb') as fh:
-            for i in range(written_items_no): # We do not use comprehension or slicing here to save memory
-                pkl.dump(reranked[i], fh, pkl.HIGHEST_PROTOCOL)
-
+        tmp_out_dir,_ = writetmpfile(cache, tmp_out_dir, file_counter)
         file_counter += 1
-        cnt += written_items_no
-
         del cache[:] # enable GC
 
     logging.info('Total number of I/O writes: %d ' % file_counter)
