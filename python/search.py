@@ -201,10 +201,29 @@ def memefficientrerankedsearch(es, term, k, func):
     return merged_results, tmp_out_dir # We return the directory of tmp files to remove them when finishing
 
 if __name__ == "__main__":
-    method = argv[1]
-    if method == 'simple' or method == 'rerank' or method == 'externalrerank':
-        term = argv[2]
-        k = int(argv[3])
+
+    if exists("/tmp1"):
+        print("/tmp1 does not exist")
+        sys.exit(0)
+
+    # Keep listening from the input. Stop when user hitting the 'q' key
+    while True:
+        inp = input("Command [simple | rerank | externalrank] (any other to stop):")
+        if inp != 'simple' and inp != 'rerank' != 'externalrerank': 
+            print("Goodbye !")
+            sys.exit(0)
+        term = input("Term (everything after space is ignored. Press 'q' to stop):")
+        if term == 'q': 
+            print("Goodbye !")
+            sys.exit(0)
+        k = input("Number of desired results (Press 'q' to stop):")
+        if k == 'q':
+            print("Goodbye !")
+            sys.exit(0)
+
+        if ' ' in term:
+            term = term[:term.find(':')]
+        k = int(k)
         tmpdir = None
         try:
             client = connect()

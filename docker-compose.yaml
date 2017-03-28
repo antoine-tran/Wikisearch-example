@@ -9,8 +9,6 @@ services:
   es:
     image: "elasticsearch"
   indexer:
-    build:
-      context: .
-      dockerfile: Dockerfile.local
+    build: .
 
 
