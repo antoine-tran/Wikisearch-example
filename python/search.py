@@ -165,7 +165,6 @@ def memefficientrerankedsearch(es, term, k, func):
         while cnt < k and sys.getsizeof(cache) < MEMSIZE:
             doc = next(res)
             doc['_source']['text'] = ''  # enable GC
-            print(str(doc).encode('utf-8'))
 
             if sys.getsizeof(doc) > MEMSIZE - sys.getsizeof(cache): # do not have enough space to expand cache.
                                                                     # This is just an estimation, because lists
@@ -186,7 +185,6 @@ def memefficientrerankedsearch(es, term, k, func):
     except StopIteration:
         pass
 
-    print(cache)
     if len(cache) > 0 and cnt <= k: # Write the remaining results to the last file. Repeat the above 2 steps        
         cache.sort(key=lambda x: func(es, term, x), reverse=True)
         tmp_out_dir,_ = writetmpfile(cache, tmp_out_dir, file_counter)
@@ -194,7 +192,6 @@ def memefficientrerankedsearch(es, term, k, func):
         del cache[:] # enable GC
 
     print('Total number of I/O writes: %d ' % file_counter)
-    print(tmp_out_dir)
 
     # Step 3: Merge sorted files using priority queue, size of the queue: O(file_counter)
     files_lst = [join(tmp_out_dir,f) for f in os.listdir(tmp_out_dir) 
