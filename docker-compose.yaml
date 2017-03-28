@@ -9,8 +9,8 @@ services:
   es:
     image: "elasticsearch"
   indexer:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile.index
     depends_on:
       - "es"
-
-

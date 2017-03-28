@@ -1,0 +1,34 @@
+# 
+# Dockerfile to set up index application in standalone model
+# 
+# 1. Install python third-party libraries
+# 2. Download the wikipedia XML dump
+# 3. Index into Elasticsearch
+# 
+# Tuan Tran
+# ttran@L3S.de
+#
+
+FROM library/python
+
+# http://bugs.python.org/issue19846
+# > At the moment, setting "LANG=C" on a Linux system *fundamentally breaks Python 3*, and that's not OK.
+ENV LANG C.UTF-8
+
+# Upload source code
+ADD python /home
+WORKDIR "/home"
+
+# Install the libraries
+RUN pip install -r requirements.txt
+
+## Download the data
+RUN wget -O enwiki.xml.bz2 "http://download.wikimedia.org/enwiki/latest/enwiki-latest-pages-articles.xml.bz2" \
+    && mkdir -p /data \
+    && tar -xzC /data -f enwiki.xml.bz2 \
+    && rm enwiki.xml.bz2
+
+# Index command. Default with 10 processes, flush to the index after every 10000 parsed pages
+# and does not pring the logging messages
+
+CMD python WikiExtractor.py --json --processes 10 --quiet --batch 10000 /data/enwiki.xml
