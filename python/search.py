@@ -144,6 +144,7 @@ def memefficientrerankedsearch(es, term, k, func):
     # batch_size = res['hits']['total']
 
     # Write all partially sorted results into binary files in the same directory
+    '''
     tmp_out_dir = join(TMP_DIR, str(time.time()))
     if not exists(tmp_out_dir):
         os.makedirs(tmp_out_dir)
@@ -203,6 +204,8 @@ def memefficientrerankedsearch(es, term, k, func):
     merged_results = heapq.merge(*map(pklLoader, files_lst), key=lambda d: -float(d['_score']))
 
     return merged_results, tmp_out_dir # We return the directory of tmp files to remove them when finishing
+    '''
+    return
 
 if __name__ == "__main__":
     method = argv[1]
