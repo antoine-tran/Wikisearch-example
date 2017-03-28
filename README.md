@@ -68,4 +68,8 @@ $ python WikiExtractor.py --json --processes 10 --quiet --batch 10000 ../data/en
 $ python search.py
 ```
 
+## Implementation Sketch
 
+As mentioned, the Wikisearch-example uses WikiExtractor to parse Wikipedia XML dump, and uses Elasticsearch as the full-text index to run the query. In the search phase, it performs the re-rank by fetching the results using Elasticsearch API, and perform the in-memory sorting by a custom ranking function.
+
+When the results coming from Elasticsearch exceeds the main memory, Wikisearch-example provides an option of 'external' re-ranking, where it loads each part of the results into memory and sorts them, then writes out to the temporary files. The final results are fetched by performing a merge of the disk-residing sorted results using a priority queue.
