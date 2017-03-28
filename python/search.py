@@ -186,6 +186,7 @@ def memefficientrerankedsearch(es, term, k, func):
     except StopIteration:
         pass
 
+    print(cache)
     if len(cache) > 0 and cnt < k: # Write the remaining results to the last file. Repeat the above 2 steps        
         cache.sort(key=lambda x: func(es, term, x), reverse=True)
         tmp_out_dir,_ = writetmpfile(cache, tmp_out_dir, file_counter)
