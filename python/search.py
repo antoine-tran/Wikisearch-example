@@ -187,13 +187,14 @@ def memefficientrerankedsearch(es, term, k, func):
         pass
 
     print(cache)
-    if len(cache) > 0 and cnt < k: # Write the remaining results to the last file. Repeat the above 2 steps        
+    if len(cache) > 0 and cnt <= k: # Write the remaining results to the last file. Repeat the above 2 steps        
         cache.sort(key=lambda x: func(es, term, x), reverse=True)
         tmp_out_dir,_ = writetmpfile(cache, tmp_out_dir, file_counter)
         file_counter += 1
         del cache[:] # enable GC
 
     print('Total number of I/O writes: %d ' % file_counter)
+    print(tmp_out_dir)
 
     # Step 3: Merge sorted files using priority queue, size of the queue: O(file_counter)
     files_lst = [join(tmp_out_dir,f) for f in os.listdir(tmp_out_dir) 
