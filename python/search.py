@@ -118,7 +118,7 @@ def memefficientrerankedsearch(es, term, k, func):
     max_batch = min(k,100) # The maximal number of results returned in one batch. This number should be
                            # tuned based on the average size of document length, the number of shards,
                            # and the main memory of the client.
-    res = helpers.scan(
+    res = helpers.scan(es,
         index='wiki',
         doc_type='page',
         scroll='1m', # Keep the connection alive for max 1 min
