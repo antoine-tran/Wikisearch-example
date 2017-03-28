@@ -202,10 +202,6 @@ def memefficientrerankedsearch(es, term, k, func):
 
 if __name__ == "__main__":
 
-    if exists("/tmp1"):
-        print("/tmp1 does not exist")
-        sys.exit(0)
-
     # Keep listening from the input. Stop when user hitting the 'q' key
     while True:
         inp = input("Command [simple | rerank | externalrank] (any other to stop):")

@@ -23,16 +23,15 @@ WORKDIR "/home"
 RUN pip install -r requirements.txt
 
 # Download the data
-# RUN wget -O enwiki.xml.bz2 "http://download.wikimedia.org/enwiki/latest/enwiki-latest-pages-articles.xml.bz2" \
-#     && mkdir -p /data \
-#     && tar -xzC /data -f enwiki.xml.bz2 \
-#     && rm enwiki.xml.bz2
+RUN wget -O enwiki.xml.bz2 "http://download.wikimedia.org/enwiki/latest/enwiki-latest-pages-articles.xml.bz2" \
+     && mkdir -p /data \
+     && tar -xzC /data -f enwiki.xml.bz2 \
+     && rm enwiki.xml.bz2
 
-# Index. Default with 10 processes, flush to the index after every 10000 parsed pages, and does not pring the logging messages
-# CMD ["python","WikiExtractor.py","--json","--processes","10","--quiet","--batch","10000","/data/enwiki.xml"]
-RUN python server.py
-
-# Search. Follow the prompt instructions. First we choose the methods:
+# Two phases:
+# 1. Index. Default with 10 processes, flush to the index after every 10000 parsed pages, and does not pring the logging messages
+#
+# 2. Search. Follow the prompt instructions. First we choose the methods:
 # simple - using ElasticSearch default setting;
 # rerank - Rerank the ElasticSearch results using inversed ranking
 # externalrerank - Rerank the ElasticSearch results when the number of results is large, and the memory is limited
@@ -40,4 +39,5 @@ RUN python server.py
 # For each method, there are two subsequent parameters:
 # term - a single term to query
 # k - the number of desired results
-CMD ["python","search.py"]
+
+CMD python WikiExtractor.py --json --processes 10 --quiet --batch 10000 /data/enwiki.xml && python search.py

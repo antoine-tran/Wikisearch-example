@@ -10,5 +10,7 @@ services:
     image: "elasticsearch"
   indexer:
     build: .
+    depends_on:
+      - "es"
 
 
