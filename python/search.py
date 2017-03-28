@@ -155,7 +155,7 @@ def memefficientrerankedsearch(es, term, k, func):
     try:
         while cnt < k and sys.getsizeof(cache) < MEMSIZE:
             hit = next(res)
-            print(str(hit).decode('utf-8'))
+            print(str(hit))
             doc = hit['hits']['hits']
             doc['_source']['text'] = ''  # enable GC
 
