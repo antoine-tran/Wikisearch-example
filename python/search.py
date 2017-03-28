@@ -182,7 +182,7 @@ if __name__ == "__main__":
             elif method == 'rerank':
                 res = rerankedsearch(client, term, k, inverve_score)
             else:
-                res = memefficientrerankedsearch(client, term, k, inverse_score)
+                res = memefficientrerankedsearch(client, term, k, globals()['inverse_score'])
             for hit in res:
                 print(str(hit).encode('utf-8'))
         finally:
