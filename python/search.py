@@ -10,7 +10,7 @@ import sys
 from sys import argv
 
 import os
-from os.path import join,isfile
+from os.path import join,isfile,exists
 
 from conn import connect,close as es_close
 from elasticsearch import helpers
@@ -118,11 +118,10 @@ def memefficientrerankedsearch(es, term, k, func):
     max_batch = min(k,100) # The maximal number of results returned in one batch. This number should be
                            # tuned based on the average size of document length, the number of shards,
                            # and the main memory of the client.
-    res = es.search(
+    res = helpers.scan(
         index='wiki',
         doc_type='page',
         scroll='1m', # Keep the connection alive for max 1 min
-        search_type='scan',
         size=max_batch,
         body={
             "query": { 
@@ -137,6 +136,8 @@ def memefficientrerankedsearch(es, term, k, func):
 
     # Write all partially sorted results into binary files in the same directory
     tmp_out_dir = join(TMP_DIR, str(time.time()))
+    if not exists(tmp_out_dir):
+        os.makedirs(tmp_out_dir)
 
     cnt = 0 # The number of results received so far
     file_counter = 0
