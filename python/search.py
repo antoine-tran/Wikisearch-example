@@ -110,8 +110,9 @@ def rerankedsearch(es, term, k, func):
 
 def pklLoader(f):
     try:
-        while True:
-            yield pkl.load(f)
+        with open(f,'rb') as fh:
+            while True:
+                yield pkl.load(fh)
     except EOFError:
         pass
 
@@ -174,7 +175,6 @@ def memefficientrerankedsearch(es, term, k, func):
                         pkl.dump(reranked[i], fh, pkl.HIGHEST_PROTOCOL)
 
                 file_counter += 1
-                cnt += written_items_no
                 del cache[:]
 
             cache.append(doc)
@@ -182,7 +182,7 @@ def memefficientrerankedsearch(es, term, k, func):
     except StopIteration:
         pass
 
-    if len(cache) > 0: # Write the remaining results to the last file
+    if len(cache) > 0 and cnt < k: # Write the remaining results to the last file
 
         cache.append(doc)
         cache.sort(key=lambda x: func(es, term, x), reverse=True)
@@ -194,6 +194,8 @@ def memefficientrerankedsearch(es, term, k, func):
 
         file_counter += 1
         cnt += written_items_no
+
+        del cache[:] # enable GC
 
     logging.info('Total number of I/O writes: %d ' % file_counter)
 
