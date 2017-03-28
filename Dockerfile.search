@@ -1,0 +1,29 @@
+# 
+# Dockerfile to set up index application in standalone model
+# 
+# 1. Install python third-party libraries
+# 2. Search from Elasticsearch
+
+FROM library/python
+
+# http://bugs.python.org/issue19846
+# > At the moment, setting "LANG=C" on a Linux system *fundamentally breaks Python 3*, and that's not OK.
+ENV LANG C.UTF-8
+
+# Upload source code
+ADD python /home
+WORKDIR "/home"
+
+# Install the libraries
+RUN pip install -r requirements.txt
+
+# Search command. Follow the prompt instructions. First we choose the methods:
+# simple - using ElasticSearch default setting;
+# rerank - Rerank the ElasticSearch results using inversed ranking
+# externalrerank - Rerank the ElasticSearch results when the number of results is large, and the memory is limited
+#
+# For each method, there are two subsequent parameters:
+# term - a single term to query
+# k - the number of desired results
+
+CMD python test.py
