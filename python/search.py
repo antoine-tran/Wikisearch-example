@@ -165,7 +165,7 @@ def memefficientrerankedsearch(es, term, k, func):
                 # Step 1: Internal sorting for each chunk of data. This must be in-place to save memory
                 cache.sort(key=lambda x: func(es, term, x), reverse=True)
                 
-                written_items_no = min(k-cnt, len(cache)) # Only get maximum k results in total
+                written_items_no = len(cache) # Only get maximum k results in total
 
                 # Step 2: Write sorted output temp dir
                 with open(join(tmp_out_dir, '%d.es' % file_counter), 'wb') as fh:
@@ -178,6 +178,7 @@ def memefficientrerankedsearch(es, term, k, func):
                 del cache[:]
 
             cache.append(doc)
+            cnt += 1
     except StopIteration:
         pass
 
